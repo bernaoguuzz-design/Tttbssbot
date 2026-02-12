@@ -11,7 +11,7 @@ def send(msg):
     )
 
 def check():
-    send("TTBS takip sistemi aktif ✅")
+    send("TTBS takip sistemi aktif ✅") 
 
 while True:
     check()
