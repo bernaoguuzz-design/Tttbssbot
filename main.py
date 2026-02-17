@@ -49,7 +49,9 @@ async def check_ttbs():
 async def main():
     while True:
         await check_ttbs()
-        await asyncio.sleep(600)  # 10 dakika
+        for i in range(600):
+    print("Bot aktif...")
+    await asyncio.sleep(1) # 10 dakika
 
 
 asyncio.run(main())
