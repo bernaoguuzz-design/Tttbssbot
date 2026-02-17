@@ -49,9 +49,11 @@ async def check_ttbs():
 async def main():
     while True:
         await check_ttbs()
+
+        # Railway kapanmasın diye sürekli log üret
         for i in range(600):
-    print("Bot aktif...")
-    await asyncio.sleep(1) # 10 dakika
+            print("Bot aktif...")
+            await asyncio.sleep(1)
 
 
 asyncio.run(main())
