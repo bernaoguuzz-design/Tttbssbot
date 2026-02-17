@@ -2,8 +2,8 @@ import requests
 import time
 from telegram import Bot
 
-TOKEN = "BURAYA_BOT_TOKEN"
-CHAT_ID = "BURAYA_CHAT_ID"
+TOKEN = "8510481938:AAFNWm-ro49kiu6DFjVQ4v--hnHe012ZE-g"
+CHAT_ID = "7863143280"
 
 bot = Bot(token=TOKEN)
 
