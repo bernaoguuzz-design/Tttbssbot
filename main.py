@@ -1,53 +1,55 @@
+import requests
 import asyncio
 from telegram import Bot
-from playwright.async_api import async_playwright
 
 TOKEN = "8510481938:AAFNWm-ro49kiu6DFjVQ4v--hnHe012ZE-g"
 CHAT_ID = "7863143280"
 
 bot = Bot(token=TOKEN)
-seen = set()
+
+last_content = None  # önceki sonucu tutacağız
+
 
 async def check_ttbs():
-    async with async_playwright() as p:
+    global last_content
 
-        browser = await p.chromium.launch(
-            headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-gpu"
-            ]
-        )
+    try:
+        url = "https://ttbs.gtb.gov.tr/Home/BelgeSorgula"
 
-        page = await browser.new_page()
+        # siteyi çek
+        r = requests.get(url, timeout=20)
 
-        await page.goto("https://ttbs.gtb.gov.tr/Home/BelgeSorgula")
+        if r.status_code != 200:
+            print("Site cevap vermedi")
+            return
 
-        await page.wait_for_timeout(8000)
+        content = r.text
 
-        content = await page.content()
+        # ilk çalışmada sadece kaydet (mesaj atma)
+        if last_content is None:
+            last_content = content
+            print("İlk veri alındı")
+            return
 
-        if "EMLAK" in content:
-            if content not in seen:
-                seen.add(content)
-                await bot.send_message(
-                    chat_id=CHAT_ID,
-                    text="✅ TTBS'de yeni emlakçı göründü!"
-                )
+        # gerçekten değişmişse mesaj gönder
+        if content != last_content:
+            last_content = content
 
-        await browser.close()
+            await bot.send_message(
+                chat_id=CHAT_ID,
+                text="✅ TTBS'de yeni belge olabilir! Kontrol et."
+            )
+
+            print("Yeni değişiklik bulundu")
+
+    except Exception as e:
+        print("HATA:", e)
 
 
 async def main():
     while True:
-        try:
-            await check_ttbs()
-        except Exception as e:
-            print("HATA:", e)
-
-        await asyncio.sleep(60)
+        await check_ttbs()
+        await asyncio.sleep(600)  # 10 dakika
 
 
 asyncio.run(main())
