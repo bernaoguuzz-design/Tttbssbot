@@ -1,58 +1,29 @@
-import asyncio
-from playwright.async_api import async_playwright
 import requests
 import time
-import os
+from telegram import Bot
 
-TOKEN = "BURAYA_TOKEN"
-CHAT_ID = "BURAYA_CHATID"
+TOKEN = "BURAYA_BOT_TOKEN"
+CHAT_ID = "BURAYA_CHAT_ID"
 
-LAST_FILE = "last_record.txt"
+bot = Bot(token=TOKEN)
 
-def send(msg):
-    requests.post(
-        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-        data={"chat_id": CHAT_ID, "text": msg}
-    )
+seen = set()
 
-def load_last():
-    if os.path.exists(LAST_FILE):
-        with open(LAST_FILE, "r") as f:
-            return f.read().strip()
-    return ""
+def check_ttbs():
+    url = "https://ttbs.gtb.gov.tr/Home/BelgeSorgula"
 
-def save_last(value):
-    with open(LAST_FILE, "w") as f:
-        f.write(value)
+    r = requests.get(url)
+    text = r.text
 
-async def check_ttbs():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-
-        await page.goto("https://ttbs.gtb.gov.tr/Home/BelgeSorgula")
-
-        await page.select_option("#Il", "35")  # İzmir
-        await page.click("text=Ara")
-
-        await page.wait_for_timeout(6000)
-
-        # tabloda ilk satırı al
-        first_row = await page.locator("table tbody tr").first.inner_text()
-
-        await browser.close()
-
-        last_saved = load_last()
-
-        if last_saved == "":
-            save_last(first_row)
-            print("İlk kayıt alındı")
-            return
-
-        if first_row != last_saved:
-            save_last(first_row)
-            send(f"🚨 YENİ EMLAKÇI BELGESİ!\n\n{first_row}")
+    if "EMLAK" in text:
+        if text not in seen:
+            seen.add(text)
+            bot.send_message(chat_id=CHAT_ID,
+                             text="✅ TTBS'de yeni belge olabilir, kontrol et!")
 
 while True:
-    asyncio.run(check_ttbs())
-    time.sleep(600)  # 10 dakika
+    try:
+        check_ttbs()
+        time.sleep(600)  # 10 dk
+    except Exception as e:
+        print(e)
